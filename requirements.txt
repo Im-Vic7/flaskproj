@@ -4,3 +4,5 @@ flask_bootstrap
 flask_moment
 flask_wtf
 flask_sqlalchemy
+flask_migrate
+flask_mail
