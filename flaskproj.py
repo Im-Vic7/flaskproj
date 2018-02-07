@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from flask import Flask, render_template, session, redirect, url_for, flash
-from flask_script import Manager
+from flask_script import Manager, Shell
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_wtf import FlaskForm
@@ -15,6 +15,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 manager = Manager(app)
 bootstrap = Bootstrap(app)
@@ -47,6 +48,11 @@ class NameForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
+def make_shell_context():
+    return dict(app=app, db=db, User=User, Role=Role)
+manager.add_command("shell", Shell(make_context=make_shell_context()))
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
@@ -60,14 +66,29 @@ def internal_server_error(e):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     # return render_template('index.html', current_time=datetime.utcnow())
+    #
+    # form = NameForm()
+    # if form.validate_on_submit():
+    #     old_name = session.get('name')
+    #     if old_name is not None and old_name != form.name.data:
+    #         flash('Looks like you have changed your name!')
+    #     session['name'] = form.name.data
+    #     return redirect(url_for('index'))
+    # return render_template('index.html', form=form, name=session.get('name'))
+    #
     form = NameForm()
     if form.validate_on_submit():
-        old_name = session.get('name')
-        if old_name is not None and old_name != form.name.data:
-            flash('Looks like you have changed your name!')
+        user = User.query.filter_by(username=form.name.data).first()
+        if user is None:
+            user = User(username=form.name.data)
+            db.session.add(user)
+            session['known'] = False
+        else:
+            session['known'] = True
         session['name'] = form.name.data
+        form.name.data = ''
         return redirect(url_for('index'))
-    return render_template('index.html', form=form, name=session.get('name'))
+    return render_template('index.html', form=form, name=session.get('name'), known=session.get('known', False))
 
 
 @app.route('/user/<name>')
@@ -76,6 +97,6 @@ def user(name):
 
 
 if __name__ == '__main__':
-    # app.run()
-    manager.run()
+    app.run()
+    # manager.run()
     # db.create_all()
