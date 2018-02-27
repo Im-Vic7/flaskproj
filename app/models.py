@@ -4,7 +4,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 from flask import current_app
 from . import db
 from . import login_manager
-import datetime
+from datetime import datetime
 
 
 class Permission:
