@@ -1,10 +1,9 @@
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer
 from flask import current_app
-from . import db
-from . import login_manager
-from datetime import datetime
+from flask_login import UserMixin, AnonymousUserMixin
+from . import db, login_manager
 
 
 class Permission:
@@ -72,7 +71,7 @@ class User(UserMixin, db.Model):
 
     @property
     def password(self):
-        raise AttributeError('password is not a readable attribute!')
+        raise AttributeError('password is not a readable attribute')
 
     @password.setter
     def password(self, password):
@@ -110,13 +109,13 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
+
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
         return False
 
     def is_administrator(self):
         return False
-
 
 login_manager.anonymous_user = AnonymousUser
 
